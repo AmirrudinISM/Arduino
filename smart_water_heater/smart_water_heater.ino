@@ -1,64 +1,54 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+//pins for buttons
+const int heaterButtonPin = 5; 
+const int inc_button = 6;
+const int dec_button = 7;
+
+//pins for functional modules
+const int heaterPin = 8; 
+const int alarm = 9;
 #define ONE_WIRE_BUS 10
-
 OneWire oneWire(ONE_WIRE_BUS);
-
 DallasTemperature sensors(&oneWire);
 
-// Arduino pin connected to button's pin
-const int heaterButtonPin = 5; 
-// Arduino pin connected to LED's pin
-const int heaterPin    = 8; 
-//pin to increment counter
-int inc_button = 6;
-//pin to decrement
-int dec_button = 7;
-
-//temperature
-int temperature = 0;
-
-//buzzer for alamr
-int alarm = 9;
+//initial states
 int alarmState = LOW;
-
-
-// the current state of LED
+int temperature = 0;
 int heaterState = HIGH;
-    
-// the previous state of button
 int lastButtonState;    
-// the current state of button
 int currentButtonState; 
-//counter
 int desiredTemperature = 20;
 
 
 void setup() {
-  // initialize serial
-  Serial.begin(19200);
-  // set arduino pin to input pull-up mode
+  // inputs
   pinMode(heaterButtonPin, INPUT_PULLUP);
-  // set arduino pin to output mode
-  pinMode(heaterPin, OUTPUT);
-  digitalWrite(heaterPin, HIGH);
   pinMode(inc_button,INPUT);
   pinMode(dec_button,INPUT);
-  currentButtonState = digitalRead(heaterButtonPin);
-  //alarm
-  pinMode(alarm, OUTPUT);
   sensors.begin();
+  
+  // outputs
+  pinMode(heaterPin, OUTPUT);
+  digitalWrite(heaterPin, HIGH);
+  pinMode(alarm, OUTPUT);
+  
+  // initialize 
+  Serial.begin(19200);
+  currentButtonState = digitalRead(heaterButtonPin);
 }
 
 void loop() {
+  //get temperature reading
+  sensors.requestTemperatures(); 
+  temperature=sensors.getTempCByIndex(0);
   // save the last state
   lastButtonState    = currentButtonState;      
   // read new state
   currentButtonState = digitalRead(heaterButtonPin);
   
   if(lastButtonState == HIGH && currentButtonState == LOW) {
-    // toggle state of LED
     if (temperature >= desiredTemperature){
       Serial.println("Alarm already at desired temperature!");
       if (alarmState == HIGH){
@@ -66,7 +56,7 @@ void loop() {
         alarmState = LOW;
       }
     }
-      
+    //toggle heater on/off
     heaterState = !heaterState;
     // control heater arccoding to the toggled state
     digitalWrite(heaterPin, heaterState);
@@ -78,24 +68,22 @@ void loop() {
   else if(digitalRead(dec_button) == HIGH){
     desiredTemperature--;
   }
-  
-  Serial.print("Heater state: ");
-  Serial.println(heaterState);
-  Serial.print("Desired temp: ");
-  Serial.println(desiredTemperature);
-  sensors.requestTemperatures(); 
-  temperature=sensors.getTempCByIndex(0);
-  Serial.print("Current Temp: ");
-  Serial.println(temperature);
-  Serial.println("----------------");
-  
-  
+ 
   if(heaterState == LOW){
     if (temperature >= desiredTemperature){
       digitalWrite(alarm, HIGH);
       digitalWrite(heaterPin, HIGH);
-        alarmState = HIGH;
+      heaterState != heaterState;
+      alarmState = HIGH;
     }
   }
+
+  Serial.print("Heater state: ");
+  Serial.println(!heaterState);
+  Serial.print("Desired temp: ");
+  Serial.println(desiredTemperature);
+  Serial.print("Current Temp: ");
+  Serial.println(temperature);
+  Serial.println("----------------");
   
 }

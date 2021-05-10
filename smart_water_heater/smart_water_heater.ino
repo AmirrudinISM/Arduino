@@ -1,5 +1,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
 
 //pins for buttons
 const int heaterButtonPin = 5; 
@@ -13,13 +15,15 @@ const int alarm = 9;
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
 //initial states
 int alarmState = LOW;
 int temperature = 0;
 int heaterState = HIGH;
 int lastButtonState;    
 int currentButtonState; 
-int desiredTemperature = 20;
+int desiredTemperature = 35;
 
 
 void setup() {
@@ -37,6 +41,9 @@ void setup() {
   // initialize 
   Serial.begin(19200);
   currentButtonState = digitalRead(heaterButtonPin);
+
+  lcd.begin();
+  lcd.backlight();
 }
 
 void loop() {
@@ -48,9 +55,11 @@ void loop() {
   // read new state
   currentButtonState = digitalRead(heaterButtonPin);
   
+  lcd.clear();
+  
   if(lastButtonState == HIGH && currentButtonState == LOW) {
     if (temperature >= desiredTemperature){
-      Serial.println("Alarm already at desired temperature!");
+      
       if (alarmState == HIGH){
         digitalWrite(alarm,LOW);
         alarmState = LOW;
@@ -71,19 +80,28 @@ void loop() {
  
   if(heaterState == LOW){
     if (temperature >= desiredTemperature){
-      digitalWrite(alarm, HIGH);
-      digitalWrite(heaterPin, HIGH);
-      heaterState != heaterState;
+      lcd.print("Temp reached!");
+      lcd.print(temperature);
+      
       alarmState = HIGH;
+      digitalWrite(alarm, alarmState);
+      //digitalWrite(heaterPin, HIGH);
+      heaterState != heaterState;
+      digitalWrite(heaterPin, !heaterState);
     }
   }
 
-  Serial.print("Heater state: ");
-  Serial.println(!heaterState);
-  Serial.print("Desired temp: ");
-  Serial.println(desiredTemperature);
-  Serial.print("Current Temp: ");
-  Serial.println(temperature);
-  Serial.println("----------------");
+  lcd.print("Curr:");
+  lcd.print(temperature);
+  lcd.print(", Want:");
+  lcd.print(desiredTemperature);
+  lcd.setCursor (0,1); 
+  lcd.print("Heater: ");
+  if(heaterState == HIGH){
+    lcd.print("OFF");
+  }
+  else{ 
+    lcd.print("ON");
+  }
   
 }

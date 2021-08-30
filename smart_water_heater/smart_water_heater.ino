@@ -39,7 +39,6 @@ void setup() {
   pinMode(alarm, OUTPUT);
   
   // initialize 
-  Serial.begin(19200);
   currentButtonState = digitalRead(heaterButtonPin);
 
   lcd.begin();
